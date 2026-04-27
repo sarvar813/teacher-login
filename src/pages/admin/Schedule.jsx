@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalIcon, Filter } from 'lucide-react';
+import { Calendar as CalIcon, Filter, X, Check, Search } from 'lucide-react';
 
 export default function Schedule() {
   const days = ["Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma"];
@@ -9,6 +9,15 @@ export default function Schedule() {
   const teachers = ["Azizov A.", "Qodirov M.", "Usmonova G.", "Toshmatov V."];
 
   const [schedule, setSchedule] = useState({});
+  const [confirmModal, setConfirmModal] = useState(false);
+  
+  const [editModal, setEditModal] = useState({
+    isOpen: false,
+    cls: '',
+    day: '',
+    subject: '',
+    teacher: ''
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem('schoolSchedule');
@@ -17,31 +26,36 @@ export default function Schedule() {
     }
   }, []);
 
-  const handleCellClick = (cls, day) => {
-    const defaultVal = schedule[`${cls}-${day}`] ? `${schedule[`${cls}-${day}`].subject} - ${schedule[`${cls}-${day}`].teacher}` : "";
-    const input = window.prompt(`Dars kiritish: ${cls} sinf, ${day}\nFormat: Fan nomi - O'qituvchi nomi (masalan: Matematika - Azizov)`, defaultVal);
+  const openEditModal = (cls, day) => {
+    const data = schedule[`${cls}-${day}`] || { subject: '', teacher: '' };
+    setEditModal({
+      isOpen: true,
+      cls,
+      day,
+      subject: data.subject === "Noma'lum Fan" ? "" : data.subject,
+      teacher: data.teacher === "Noma'lum O'qituvchi" ? "" : data.teacher
+    });
+  };
+
+  const handleSaveEdit = () => {
+    const newSchedule = { ...schedule };
+    const { cls, day, subject, teacher } = editModal;
     
-    if (input !== null) {
-      const parts = input.split('-');
-      const newSchedule = { ...schedule };
-      
-      if (input.trim() === '') {
-        delete newSchedule[`${cls}-${day}`];
-      } else {
-        newSchedule[`${cls}-${day}`] = {
-          subject: parts[0]?.trim() || "Noma'lum Fan",
-          teacher: parts[1]?.trim() || "Noma'lum O'qituvchi"
-        };
-      }
-      
-      setSchedule(newSchedule);
-      localStorage.setItem('schoolSchedule', JSON.stringify(newSchedule));
+    if (subject.trim() === '' && teacher.trim() === '') {
+      delete newSchedule[`${cls}-${day}`];
+    } else {
+      newSchedule[`${cls}-${day}`] = {
+        subject: subject.trim() || "Noma'lum Fan",
+        teacher: teacher.trim() || "Noma'lum O'qituvchi"
+      };
     }
+    
+    setSchedule(newSchedule);
+    localStorage.setItem('schoolSchedule', JSON.stringify(newSchedule));
+    setEditModal({ ...editModal, isOpen: false });
   };
 
   const generateAutoSchedule = () => {
-    if (!window.confirm("Barcha darslar avtomatik yangilansinmi? (Eski jadval o'chadi)")) return;
-    
     const newSchedule = {};
     classes.forEach(cls => {
       days.forEach(day => {
@@ -52,10 +66,11 @@ export default function Schedule() {
     });
     setSchedule(newSchedule);
     localStorage.setItem('schoolSchedule', JSON.stringify(newSchedule));
+    setConfirmModal(false);
   };
 
   return (
-    <div className="flex-col gap-6 animate-fade-in" style={{ height: '100%' }}>
+    <div className="flex-col gap-6 animate-fade-in" style={{ height: '100%', position: 'relative' }}>
       <div className="flex-between">
         <div>
           <h1 className="heading-2">Dars Jadvali</h1>
@@ -63,7 +78,9 @@ export default function Schedule() {
         </div>
         <div className="flex-center gap-3">
           <button className="btn btn-outline"><Filter size={18}/> Filtrlash</button>
-          <button className="btn btn-primary" onClick={generateAutoSchedule}><CalIcon size={18} /> Avtomatik taqsimlash</button>
+          <button className="btn btn-primary" onClick={() => setConfirmModal(true)}>
+            <CalIcon size={18} /> Avtomatik taqsimlash
+          </button>
         </div>
       </div>
 
@@ -90,7 +107,7 @@ export default function Schedule() {
                       key={day} 
                       style={{ padding: '1rem', border: '1px solid var(--surface-border)', cursor: 'pointer', transition: 'all 0.2s' }} 
                       className="glass-hover"
-                      onClick={() => handleCellClick(cls, day)}
+                      onClick={() => openEditModal(cls, day)}
                       title="Tahrirlash uchun bosing"
                     >
                       {data ? (
@@ -109,6 +126,71 @@ export default function Schedule() {
           </tbody>
         </table>
       </div>
+
+      {/* CONFIRM MODAL (Avtomatik Taqsimlash) */}
+      {confirmModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="animate-fade-in">
+          <div className="glass-panel flex-col" style={{ padding: '2rem', width: '100%', maxWidth: '400px', gap: '1.5rem', border: '1px solid var(--surface-border)' }}>
+            <h2 className="heading-3" style={{ textAlign: 'center' }}>Diqqat!</h2>
+            <p className="text-body" style={{ textAlign: 'center' }}>
+              Avtomatik taqsimlash bosilsa, oldingi barcha yozilgan jadval qayta tuziladi va o'chib ketadi. Davom etamizmi?
+            </p>
+            <div className="grid grid-cols-2 gap-3" style={{ marginTop: '0.5rem' }}>
+              <button className="btn btn-outline" onClick={() => setConfirmModal(false)}>Bekor qilish</button>
+              <button className="btn btn-danger" onClick={generateAutoSchedule}>Ha, yangilash</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT MODAL (Dars qo'shish yoki o'zgartirish) */}
+      {editModal.isOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="animate-fade-in">
+          <div className="glass flex-col" style={{ padding: '2rem', width: '100%', maxWidth: '450px', gap: '1.5rem', background: 'var(--bg-dark)' }}>
+            
+            <div className="flex-between">
+              <h2 className="heading-3">{editModal.cls} sinf, {editModal.day}</h2>
+              <button className="btn-outline flex-center" style={{ padding: '0.5rem', borderRadius: '50%', border: 'none' }} onClick={() => setEditModal({ ...editModal, isOpen: false })}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex-col gap-4">
+              <div className="input-group">
+                <label className="input-label">Fan nomi</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Masalan: Fizika" 
+                  value={editModal.subject}
+                  onChange={(e) => setEditModal({ ...editModal, subject: e.target.value })}
+                  style={{ background: 'var(--bg-darker)' }}
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">O'qituvchi nomi (I.O.F)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Masalan: Azizov A." 
+                  value={editModal.teacher}
+                  onChange={(e) => setEditModal({ ...editModal, teacher: e.target.value })}
+                  style={{ background: 'var(--bg-darker)' }}
+                />
+              </div>
+              <p className="text-muted" style={{ fontSize: '0.8rem' }}>Ikkala maydonni bo'sh qoldirsangiz, dars jadvaldan o'chiriladi.</p>
+            </div>
+
+            <div className="flex-center" style={{ justifyContent: 'flex-end', marginTop: '1rem', gap: '1rem' }}>
+              <button className="btn btn-outline" onClick={() => setEditModal({ ...editModal, isOpen: false })}>Bekor qilish</button>
+              <button className="btn btn-primary" onClick={handleSaveEdit}><Check size={18} /> Saqlash</button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
