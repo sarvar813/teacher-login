@@ -3,6 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import DashboardLayout from './layouts/DashboardLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import TeachersList from './pages/admin/TeachersList';
+import Schedule from './pages/admin/Schedule';
+import QRCheckinData from './pages/admin/QRCheckinData';
+import VideoReviewList from './pages/admin/VideoReviewList';
+import Settings from './pages/admin/Settings';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import QRTerminal from './pages/QRTerminal';
 
@@ -16,11 +21,11 @@ function App() {
         {/* Admin Routes */}
         <Route path="/admin" element={<DashboardLayout role="admin" />}>
           <Route index element={<AdminDashboard />} />
-          <Route path="teachers" element={<div className="flex-center" style={{height:'100%'}}><h2 className="heading-3 text-muted">O'qituvchilar paneliga ulanmoqda...</h2></div>} />
-          <Route path="schedule" element={<div className="flex-center" style={{height:'100%'}}><h2 className="heading-3 text-muted">Dars Jadvali paneliga ulanmoqda...</h2></div>} />
-          <Route path="qr-checkin" element={<div className="flex-center" style={{height:'100%'}}><h2 className="heading-3 text-muted">QR Nazorat paneliga ulanmoqda...</h2></div>} />
-          <Route path="video-review" element={<div className="flex-center" style={{height:'100%'}}><h2 className="heading-3 text-muted">Video Tekshiruv paneliga ulanmoqda...</h2></div>} />
-          <Route path="settings" element={<div className="flex-center" style={{height:'100%'}}><h2 className="heading-3 text-muted">Sozlamalar qismi ulanmoqda...</h2></div>} />
+          <Route path="teachers" element={<TeachersList />} />
+          <Route path="schedule" element={<Schedule />} />
+          <Route path="qr-checkin" element={<QRCheckinData />} />
+          <Route path="video-review" element={<VideoReviewList />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* Teacher Routes */}
