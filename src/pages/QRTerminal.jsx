@@ -11,27 +11,23 @@ export default function QRTerminal() {
     if (result && result.length > 0) {
       const scannedData = result[0].rawValue;
       
-      let finalType = "O'quvchi";
-      let finalName = "Noma'lum O'quvchi";
-      let finalGrade = "Boshqa sinf";
+      let finalName = "Noma'lum O'qituvchi";
+      let finalGrade = "Noma'lum Fan";
 
       try {
         // Agar QR kod JSON formatida bo'lsa
         const parsed = JSON.parse(scannedData);
-        finalType = parsed.type || "O'quvchi";
-        finalName = parsed.name || "Noma'lum Ism";
-        finalGrade = parsed.subject || parsed.grade || "Boshqa";
+        finalName = parsed.name || finalName;
+        finalGrade = parsed.subject || parsed.grade || finalGrade;
       } catch (e) {
-        // Agar QR kod shunchaki chiziqcha bilan yozilgan bo'lsa: Masalan: Teacher-Toshmatov Vali-Tarix
-        const lower = scannedData.toLowerCase();
-        if (lower.includes('teacher') || lower.includes('ustoz')) {
-          const parts = scannedData.split('-');
-          finalType = 'Teacher';
-          finalName = parts[1] ? parts[1].trim() : 'Azizov Alisher (Mock)';
-          finalGrade = parts[2] ? parts[2].trim() : 'Matematika';
+        // Agar QR kod shunchaki chiziqcha bilan yozilgan bo'lsa: Masalan: Toshmatov Vali-Tarix
+        const parts = scannedData.split('-');
+        if (parts.length >= 2) {
+          finalName = parts[0].trim();
+          finalGrade = parts[1].trim();
         } else {
           finalName = scannedData.length < 25 ? scannedData : scannedData.substring(0, 25);
-          finalGrade = 'Boshqa...';
+          finalGrade = "Umumiy fan";
         }
       }
 
@@ -39,7 +35,7 @@ export default function QRTerminal() {
         id: Date.now(),
         data: scannedData,
         time: new Date().toLocaleTimeString(),
-        type: finalType,
+        type: 'Teacher',
         name: finalName,
         grade: finalGrade,
         status: 'success'
@@ -71,7 +67,7 @@ export default function QRTerminal() {
         
         <h1 className="heading-2" style={{ marginBottom: '0.5rem', textAlign: 'center' }}>Maktab Turniketi</h1>
         <p className="text-muted" style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          O'quvchi yoki O'qituvchilar kameraga QR kodini tuting
+          O'qituvchilar kameraga maxsus QR kodini tutishlari kerak.
         </p>
 
         <div style={{ width: '300px', height: '300px', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '2px solid var(--primary)', position: 'relative' }}>
