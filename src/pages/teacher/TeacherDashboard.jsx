@@ -1,27 +1,39 @@
 import React, { useState } from 'react';
-import { Camera, PlayCircle, StopCircle, Clock, QrCode, CheckCircle, AlertCircle } from 'lucide-react';
+import { Camera, PlayCircle, StopCircle, Clock, QrCode, CheckCircle, AlertCircle, Video } from 'lucide-react';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 export default function TeacherDashboard() {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [lessonStatus, setLessonStatus] = useState('idle'); // idle, active, ended
   const [videoStatus, setVideoStatus] = useState('idle'); // idle, sent, accepted, rejected
 
-  const handleCheckIn = () => {
-    if (!isCheckedIn) {
+  // Tizimga kirgan ustoz profili (Login sahifasidan kiritilgan deb faraz qilinadi)
+  const myProfile = {
+    name: "Alisher Azizov",
+    grade: "Fizika",
+  };
+
+  const handleScanCode = (result) => {
+    if (result && result.length > 0 && !isCheckedIn) {
+      const scannedData = result[0].rawValue;
+      
       const newScan = {
         id: Date.now(),
-        data: 'teacher',
+        data: scannedData, // Masalan maktab devoridagi kod ma'lumoti
         time: new Date().toLocaleTimeString(),
         type: 'Teacher',
-        name: 'Azizov Alisher',
-        grade: 'Fizika',
+        name: myProfile.name,
+        grade: myProfile.grade,
         status: 'success'
       };
       const existingLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
       localStorage.setItem('checkinLogs', JSON.stringify([newScan, ...existingLogs]));
       window.dispatchEvent(new Event('storage'));
+      
+      setIsCheckedIn(true);
+      setShowScanner(false);
     }
-    setIsCheckedIn(!isCheckedIn);
   };
 
   const handleSendVideo = () => {
@@ -71,18 +83,40 @@ export default function TeacherDashboard() {
             <QrCode size={48} color={isCheckedIn ? "var(--success)" : "var(--primary)"} />
           </div>
           <h2 className="heading-3 mb-2">{isCheckedIn ? "Muvaffaqiyatli Check-in!" : "QR orqali Check-in"}</h2>
-          <p className="text-muted" style={{ marginBottom: '2rem' }}>
-            {isCheckedIn ? "Siz jismonan maktabda ekanligingiz tasdiqlandi. Endi darsni boshlashingiz mumkin." : "Maktabga kelganingizni tasdiqlash uchun admin bergan QR kodni skanerlang."}
-          </p>
-          
-          <button 
-            className={`btn ${isCheckedIn ? 'btn-outline' : 'btn-primary'}`} 
-            style={{ width: '100%', maxWidth: '250px' }}
-            onClick={handleCheckIn}
-          >
-            <Camera size={18} /> 
-            {isCheckedIn ? "Skanerni qayta ochish" : "Kamerani ochish va skanerlash"}
-          </button>
+            <div className="flex-col gap-4">
+              <h4 style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Maktabga kelganimni tasdiqlash</h4>
+              <p className="text-muted" style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                Xonaga kirishdan avval (yoki maktab ostonasida) maktabning maxsus QR kodini o'z telefoningizda skanerlang.
+              </p>
+              
+              {!isCheckedIn ? (
+                showScanner ? (
+                  <div style={{ width: '100%', maxWidth: '300px', margin: '0 auto', border: '2px solid var(--primary)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+                    <Scanner
+                      onScan={handleScanCode}
+                      onError={(err) => console.log(err)}
+                      components={{ audio: false, finder: false }}
+                    />
+                    <button className="btn btn-outline" style={{ width: '100%', borderRadius: 0, border: 'none', borderTop: '1px solid var(--primary)' }} onClick={() => setShowScanner(false)}>
+                      Bekor qilish
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ width: '100%', maxWidth: '250px' }}
+                    onClick={() => setShowScanner(true)}
+                  >
+                    <Camera size={18} /> Skanerni ochish (Telefon)
+                  </button>
+                )
+              ) : (
+                <div className="flex-center gap-3 animate-fade-in" style={{ padding: '1rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid var(--success)', borderRadius: 'var(--radius-md)', color: 'var(--success)' }}>
+                  <CheckCircle size={24} />
+                  <span>Siz maktabga soat {new Date().toLocaleTimeString()} da yetib keldingiz.</span>
+                </div>
+              )}
+            </div>
         </div>
 
         {/* Current Lesson Action Section */}
