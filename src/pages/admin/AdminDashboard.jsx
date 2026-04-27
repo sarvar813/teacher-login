@@ -3,16 +3,26 @@ import { Users, UserCheck, UserX, Clock, Video, TrendingUp } from 'lucide-react'
 
 export default function AdminDashboard() {
   const [logs, setLogs] = useState([]);
+  const [videos, setVideos] = useState([]);
 
   useEffect(() => {
     // Initial Load
     const localLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
-    setLogs(localLogs.slice(0, 5)); // show latest 5
+    setLogs(localLogs.slice(0, 5));
+    
+    const localVideos = JSON.parse(localStorage.getItem('pendingVideos') || '[{"id": 1, "title": "8 \\"B\\" sinf - Fizika", "teacher": "Qodirov M."}, {"id": 2, "title": "9 \\"A\\" sinf - Ona tili", "teacher": "Usmonova G."}]');
+    if (!localStorage.getItem('pendingVideos')) {
+      localStorage.setItem('pendingVideos', JSON.stringify(localVideos));
+    }
+    setVideos(localVideos);
 
     // Listen to changes from Terminal (if opened in another tab)
     const handleStorage = () => {
       const updatedLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
       setLogs(updatedLogs.slice(0, 5));
+
+      const updatedVideos = JSON.parse(localStorage.getItem('pendingVideos') || '[]');
+      setVideos(updatedVideos);
     };
 
     window.addEventListener('storage', handleStorage);
@@ -25,6 +35,18 @@ export default function AdminDashboard() {
       clearInterval(interval);
     }
   }, []);
+  const handleVideoAction = (id, action) => {
+    const updatedVideos = videos.filter(v => v.id !== id);
+    setVideos(updatedVideos);
+    localStorage.setItem('pendingVideos', JSON.stringify(updatedVideos));
+    
+    // Log interaction natively so the frontend teacher could theoretically receive it
+    const responses = JSON.parse(localStorage.getItem('videoResponses') || '{}');
+    responses[id] = action;
+    localStorage.setItem('videoResponses', JSON.stringify(responses));
+    window.dispatchEvent(new Event('storage'));
+  };
+
   const stats = [
     { label: "Jami O'qituvchilar", value: "48", icon: <Users size={24} color="var(--primary)" />, trend: "+2" },
     { label: "Bugun Kelganlar", value: "42", icon: <UserCheck size={24} color="var(--success)" />, trend: "87%" },
@@ -99,24 +121,28 @@ export default function AdminDashboard() {
         <div className="glass" style={{ padding: '1.5rem' }}>
           <h3 className="heading-3" style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Kutilayotgan Dars Videolari</h3>
           <div className="flex-col gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex-between" style={{ paddingBottom: '1rem', borderBottom: i !== 3 ? '1px solid var(--surface-border)' : 'none' }}>
+            {videos.length === 0 ? (
+              <p className="text-muted" style={{ padding: '1rem', textAlign: 'center' }}>Hamma videolar tekshirilgan.</p>
+            ) : (
+              videos.map((vid, i) => (
+              <div key={vid.id} className="flex-between animate-fade-in" style={{ paddingBottom: '1rem', borderBottom: i !== videos.length - 1 ? '1px solid var(--surface-border)' : 'none' }}>
                 <div className="flex-center gap-3">
                   <div style={{ width: '48px', height: '36px', borderRadius: '8px', background: 'var(--bg-darker)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Video size={16} color="var(--primary)" />
                   </div>
                   <div className="flex-col">
-                    <span style={{ fontWeight: 500 }}>8 "B" sinf - Fizika</span>
-                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>O'qituvchi: Qodirov M.</span>
+                    <span style={{ fontWeight: 500 }}>{vid.title}</span>
+                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>O'qituvchi: {vid.teacher}</span>
                   </div>
                 </div>
                 <div className="flex-center gap-2">
-                  <button className="btn btn-success" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Qabul</button>
-                  <button className="btn btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Rad</button>
+                  <button onClick={() => handleVideoAction(vid.id, 'accept')} className="btn btn-success" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Qabul</button>
+                  <button onClick={() => handleVideoAction(vid.id, 'reject')} className="btn btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Rad</button>
                 </div>
               </div>
-            ))}
-            <button className="btn btn-outline" style={{ width: '100%', marginTop: '0.5rem' }}>Barchasini ko'rish</button>
+              ))
+            )}
+            {videos.length > 0 && <button className="btn btn-outline" style={{ width: '100%', marginTop: '0.5rem' }}>Barchasini ko'rish</button>}
           </div>
         </div>
 

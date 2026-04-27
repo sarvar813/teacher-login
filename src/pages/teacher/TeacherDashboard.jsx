@@ -4,6 +4,36 @@ import { Camera, PlayCircle, StopCircle, Clock, QrCode, CheckCircle, AlertCircle
 export default function TeacherDashboard() {
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [lessonStatus, setLessonStatus] = useState('idle'); // idle, active, ended
+  const [videoStatus, setVideoStatus] = useState('idle'); // idle, sent, accepted, rejected
+
+  const handleCheckIn = () => {
+    if (!isCheckedIn) {
+      const newScan = {
+        id: Date.now(),
+        data: 'teacher',
+        time: new Date().toLocaleTimeString(),
+        type: 'Teacher',
+        name: 'Azizov Alisher',
+        status: 'success'
+      };
+      const existingLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
+      localStorage.setItem('checkinLogs', JSON.stringify([newScan, ...existingLogs]));
+      window.dispatchEvent(new Event('storage'));
+    }
+    setIsCheckedIn(!isCheckedIn);
+  };
+
+  const handleSendVideo = () => {
+    setVideoStatus('sent');
+    const existingVideos = JSON.parse(localStorage.getItem('pendingVideos') || '[]');
+    const newVideo = {
+      id: Date.now(),
+      title: '8 "B" sinf - Fizika (Mock)',
+      teacher: 'Azizov Alisher'
+    };
+    localStorage.setItem('pendingVideos', JSON.stringify([newVideo, ...existingVideos]));
+    window.dispatchEvent(new Event('storage'));
+  };
   
   return (
     <div className="flex-col gap-6 animate-fade-in" style={{ height: '100%', maxWidth: '1000px', margin: '0 auto' }}>
@@ -47,7 +77,7 @@ export default function TeacherDashboard() {
           <button 
             className={`btn ${isCheckedIn ? 'btn-outline' : 'btn-primary'}`} 
             style={{ width: '100%', maxWidth: '250px' }}
-            onClick={() => setIsCheckedIn(!isCheckedIn)}
+            onClick={handleCheckIn}
           >
             <Camera size={18} /> 
             {isCheckedIn ? "Skanerni qayta ochish" : "Kamerani ochish va skanerlash"}
@@ -98,10 +128,11 @@ export default function TeacherDashboard() {
               </p>
               <button 
                 className="btn btn-outline" 
-                style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)' }}
-                disabled={lessonStatus !== 'active'}
+                style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)', opacity: videoStatus === 'sent' ? 0.6 : 1 }}
+                disabled={lessonStatus !== 'active' || videoStatus === 'sent'}
+                onClick={handleSendVideo}
               >
-                <Video size={18} /> Video yozib olish va yuborish
+                <Video size={18} /> {videoStatus === 'sent' ? "Video yuborildi. Kuqilyapti..." : "Video yozib olish va yuborish"}
               </button>
             </div>
 
