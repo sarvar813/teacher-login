@@ -11,14 +11,37 @@ export default function QRTerminal() {
     if (result && result.length > 0) {
       const scannedData = result[0].rawValue;
       
-      // Simulate checking DB
+      let finalType = "O'quvchi";
+      let finalName = "Noma'lum O'quvchi";
+      let finalGrade = "Boshqa sinf";
+
+      try {
+        // Agar QR kod JSON formatida bo'lsa
+        const parsed = JSON.parse(scannedData);
+        finalType = parsed.type || "O'quvchi";
+        finalName = parsed.name || "Noma'lum Ism";
+        finalGrade = parsed.subject || parsed.grade || "Boshqa";
+      } catch (e) {
+        // Agar QR kod shunchaki chiziqcha bilan yozilgan bo'lsa: Masalan: Teacher-Toshmatov Vali-Tarix
+        const lower = scannedData.toLowerCase();
+        if (lower.includes('teacher') || lower.includes('ustoz')) {
+          const parts = scannedData.split('-');
+          finalType = 'Teacher';
+          finalName = parts[1] ? parts[1].trim() : 'Azizov Alisher (Mock)';
+          finalGrade = parts[2] ? parts[2].trim() : 'Matematika';
+        } else {
+          finalName = scannedData.length < 25 ? scannedData : scannedData.substring(0, 25);
+          finalGrade = 'Boshqa...';
+        }
+      }
+
       const newScan = {
         id: Date.now(),
         data: scannedData,
         time: new Date().toLocaleTimeString(),
-        type: scannedData.includes('teacher') ? 'Teacher' : 'O\'quvchi',
-        name: scannedData.includes('teacher') ? 'Azizov Alisher' : 'Azamat Qodirov',
-        grade: scannedData.includes('teacher') ? 'Matematika' : '8-"B" sinf',
+        type: finalType,
+        name: finalName,
+        grade: finalGrade,
         status: 'success'
       };
 
