@@ -1,38 +1,39 @@
-import React, { useState } from 'react';
-import { Camera, PlayCircle, StopCircle, Clock, QrCode, CheckCircle, AlertCircle, Video } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera, PlayCircle, StopCircle, Clock, QrCode, CheckCircle, AlertCircle, Video, List, Activity, User, LogOut } from 'lucide-react';
 import { Scanner } from '@yudiel/react-qr-scanner';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../../api';
 
 export default function TeacherDashboard() {
+  const navigate = useNavigate();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [lessonStatus, setLessonStatus] = useState('idle'); // idle, active, ended
   const [videoStatus, setVideoStatus] = useState('idle'); // idle, sent, accepted, rejected
 
-  // Tizimga kirgan ustoz profili (Login sahifasidan kiritilgan deb faraz qilinadi)
-  const myProfile = {
-    name: "Alisher Azizov",
-    grade: "Fizika",
-  };
+  const [profile, setProfile] = useState(null);
 
-  const handleScanCode = (result) => {
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      setProfile(JSON.parse(userStr));
+    } else {
+      navigate('/'); // if not logged in, boot out
+    }
+  }, [navigate]);
+
+  const handleScanCode = async (result) => {
     if (result && result.length > 0 && !isCheckedIn) {
       const scannedData = result[0].rawValue;
-      
-      const newScan = {
-        id: Date.now(),
-        data: scannedData, // Masalan maktab devoridagi kod ma'lumoti
-        time: new Date().toLocaleTimeString(),
-        type: 'Teacher',
-        name: myProfile.name,
-        grade: myProfile.grade,
-        status: 'success'
-      };
-      const existingLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
-      localStorage.setItem('checkinLogs', JSON.stringify([newScan, ...existingLogs]));
-      window.dispatchEvent(new Event('storage'));
-      
-      setIsCheckedIn(true);
-      setShowScanner(false);
+      try {
+        // Haqiqiy backend ga yuborish
+        await api.checkIn(scannedData);
+        setIsCheckedIn(true);
+        setShowScanner(false);
+      } catch (err) {
+        console.error(err);
+        alert("Xato: O'qitishda muammo bo'ldi (yoki bu noto'g'ri QR-Kod). API: /attendance/check-in/");
+      }
     }
   };
 
@@ -51,6 +52,17 @@ export default function TeacherDashboard() {
   return (
     <div className="flex-col gap-6 animate-fade-in" style={{ height: '100%', maxWidth: '1000px', margin: '0 auto' }}>
       
+      {/* Top Welcome Section */}
+      <div className="glass flex-between" style={{ padding: '2rem', borderRadius: 'var(--radius-lg)' }}>
+        <div className="flex-col gap-2">
+          <h1 className="heading-2">Xush kelibsiz, {profile?.first_name || profile?.username || "Ustoz"}!</h1>
+          <p className="text-muted">Bugungi darslaringiz va statistikangiz bilan tanashing.</p>
+        </div>
+        <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--secondary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <User size={40} color="white" />
+        </div>
+      </div>
+
       <div className="flex-between">
         <div>
           <h1 className="heading-2">Mening Holatim</h1>
