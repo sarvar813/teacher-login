@@ -104,7 +104,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex-col">
                     <span style={{ fontWeight: 500 }}>{log.name}</span>
-                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>{log.type}</span>
+                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>{log.type === 'Teacher' ? log.grade + ' o\'qituvchisi' : log.grade}</span>
                   </div>
                 </div>
                 <div className="flex-col" style={{ alignItems: 'flex-end' }}>

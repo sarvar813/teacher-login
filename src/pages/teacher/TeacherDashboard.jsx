@@ -14,6 +14,7 @@ export default function TeacherDashboard() {
         time: new Date().toLocaleTimeString(),
         type: 'Teacher',
         name: 'Azizov Alisher',
+        grade: 'Fizika',
         status: 'success'
       };
       const existingLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');

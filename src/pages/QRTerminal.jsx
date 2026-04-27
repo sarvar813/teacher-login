@@ -17,7 +17,8 @@ export default function QRTerminal() {
         data: scannedData,
         time: new Date().toLocaleTimeString(),
         type: scannedData.includes('teacher') ? 'Teacher' : 'O\'quvchi',
-        name: scannedData.includes('teacher') ? 'Alisher Azizov' : 'Azamat Qodirov (8-sinf)',
+        name: scannedData.includes('teacher') ? 'Azizov Alisher' : 'Azamat Qodirov',
+        grade: scannedData.includes('teacher') ? 'Matematika' : '8-"B" sinf',
         status: 'success'
       };
 
@@ -71,8 +72,8 @@ export default function QRTerminal() {
              }}>
                 <CheckCircle size={32} />
                 <div className="flex-col">
-                  <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{lastScan.name}</span>
-                  <span style={{ fontSize: '0.85rem' }}>Muvaffaqiyatli - {lastScan.time}</span>
+                  <span style={{ fontWeight: 600, fontSize: '1.2rem' }}>{lastScan.name}</span>
+                  <span style={{ fontSize: '0.9rem' }}>{lastScan.grade} | Muvaffaqiyatli - {lastScan.time}</span>
                 </div>
              </div>
           ) : (
