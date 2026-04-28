@@ -134,7 +134,7 @@ export default function TeachersList() {
                   <input required type="text" className="input-field" value={newTeacher.full_name} onChange={e => setNewTeacher({...newTeacher, full_name: e.target.value})} placeholder="Masalan: Alisher Azizov" />
                   <button type="button" className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={() => {
                     if (!newTeacher.full_name) return alert("Avval F.I.O ni kiriting!");
-                    const base = newTeacher.full_name.split(' ')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const base = newTeacher.full_name.toLowerCase().replace(/[^a-z0-9]/g, '');
                     const rNum = Math.floor(100 + Math.random() * 900);
                     const rPass = Math.floor(100000 + Math.random() * 900000);
                     setNewTeacher({...newTeacher, username: `${base}${rNum}`, password: rPass.toString()});
