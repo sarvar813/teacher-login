@@ -1,19 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Loader } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Loader, X } from 'lucide-react';
 import { api } from '../../api';
 
 export default function TeachersList() {
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [showModal, setShowModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newTeacher, setNewTeacher] = useState({ full_name: '', username: '', password: '', phone: '' });
 
-  useEffect(() => {
+  const loadTeachers = () => {
+    setLoading(true);
     api.getTeachers()
-      .then(res => {
-        setTeachers(res.results || []);
-      })
+      .then(res => setTeachers(res.results || []))
       .catch(err => console.error("O'qituvchilarni yuklashda xatolik:", err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadTeachers();
   }, []);
+
+  const handleCreateTeacher = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await api.createTeacher(newTeacher);
+      setShowModal(false);
+      setNewTeacher({ full_name: '', username: '', password: '', phone: '' });
+      loadTeachers();
+    } catch (err) {
+      console.error(err);
+      alert("Xatolik: " + (err.data ? JSON.stringify(err.data) : err.message));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex-col gap-6 animate-fade-in" style={{ height: '100%' }}>
@@ -22,7 +45,9 @@ export default function TeachersList() {
           <h1 className="heading-2">O'qituvchilar ro'yxati</h1>
           <p className="text-muted">Haqiqiy baza orqali bog'langan tizim</p>
         </div>
-        <button className="btn btn-primary"><Plus size={18} /> Yangi Qo'shish</button>
+        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <Plus size={18} /> Yangi Qo'shish
+        </button>
       </div>
 
       <div className="glass flex-col" style={{ flex: 1, padding: '1.5rem', gap: '1rem' }}>
@@ -91,6 +116,42 @@ export default function TeachersList() {
           </div>
         )}
       </div>
+
+      {showModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass" style={{ width: '100%', maxWidth: '400px', padding: '2rem', borderRadius: 'var(--radius-lg)' }}>
+            <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+              <h2 className="heading-3">Yangi O'qituvchi qo'shish</h2>
+              <button onClick={() => setShowModal(false)} style={{ background: 'transparent', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreateTeacher} className="flex-col gap-4">
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>F.I.O</label>
+                <input required type="text" className="input-field" value={newTeacher.full_name} onChange={e => setNewTeacher({...newTeacher, full_name: e.target.value})} placeholder="Masalan: Alisher Azizov" />
+              </div>
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Login (Username)</label>
+                <input required type="text" className="input-field" value={newTeacher.username} onChange={e => setNewTeacher({...newTeacher, username: e.target.value})} placeholder="Masalan: alisher123" />
+              </div>
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Parol (Password)</label>
+                <input required type="text" className="input-field" value={newTeacher.password} onChange={e => setNewTeacher({...newTeacher, password: e.target.value})} placeholder="Kamida 6 ta belgi" />
+              </div>
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Telefon Raqam</label>
+                <input required type="text" className="input-field" value={newTeacher.phone} onChange={e => setNewTeacher({...newTeacher, phone: e.target.value})} placeholder="+998 90 123 45 67" />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }} disabled={isSubmitting}>
+                {isSubmitting ? "Yaratilmoqda..." : "Saqlash va Yaratish"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
