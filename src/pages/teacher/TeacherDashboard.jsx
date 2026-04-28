@@ -189,13 +189,13 @@ export default function TeacherDashboard() {
                   accept="image/*" 
                   capture="environment" 
                   onChange={handlePhotoSelect}
-                  disabled={lessonStatus !== 'active' || videoStatus === 'sent' || videoStatus === 'accepted'}
+                  disabled={videoStatus === 'sent' || videoStatus === 'accepted'}
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
                 />
                 <button 
                   className="btn btn-outline" 
                   style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)', opacity: (videoStatus === 'sent' || videoStatus === 'accepted') ? 0.6 : 1 }}
-                  disabled={lessonStatus !== 'active' || videoStatus === 'sent' || videoStatus === 'accepted'}
+                  disabled={videoStatus === 'sent' || videoStatus === 'accepted'}
                 >
                   <Camera size={18} /> {
                     videoStatus === 'sent' ? "Rasm yuborilmoqda..." : 
