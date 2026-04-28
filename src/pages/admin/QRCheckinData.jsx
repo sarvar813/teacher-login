@@ -1,10 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Download, QrCode, Search, Loader } from 'lucide-react';
+import { Download, QrCode, Search, Loader, X, Maximize } from 'lucide-react';
 import { api } from '../../api';
 
 export default function QRCheckinData() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrData, setQrData] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const fetchQRCode = async () => {
+    setShowQRModal(true);
+    setQrLoading(true);
+    try {
+      const res = await api.getQRCodes();
+      if (res.results && res.results.length > 0) {
+        setQrData(res.results[0].code_value || res.results[0].code || 'SCHOOL_CHECKIN');
+      } else {
+        const createRes = await api.generateStaticQR();
+        setQrData(createRes.code_value || createRes.code || 'SCHOOL_CHECKIN');
+      }
+    } catch (err) {
+      console.error(err);
+      setQrData("ERROR_OR_FALLBACK_CODE");
+    } finally {
+      setQrLoading(false);
+    }
+  };
 
   useEffect(() => {
     api.getAttendanceLogs()
@@ -25,9 +48,14 @@ export default function QRCheckinData() {
             <p className="text-muted">Turniketdan va o'qituvchilardan o'tgan barcha skaner tarixlari</p>
           </div>
         </div>
-        <button className="btn btn-outline" style={{ color: 'var(--success)', borderColor: 'var(--success)' }}>
-          <Download size={18} /> Excel ga yuklash
-        </button>
+        <div className="flex-center gap-3">
+          <button className="btn btn-primary" onClick={fetchQRCode}>
+            <Maximize size={18} /> QR Kodni Ko'rsatish
+          </button>
+          <button className="btn btn-outline" style={{ color: 'var(--success)', borderColor: 'var(--success)' }}>
+            <Download size={18} /> Excel ga yuklash
+          </button>
+        </div>
       </div>
 
       <div className="glass flex-col" style={{ flex: 1, padding: '1.5rem', gap: '1rem' }}>
@@ -87,6 +115,55 @@ export default function QRCheckinData() {
           </div>
         )}
       </div>
+
+      {/* QR Code Modal */}
+      {showQRModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass" style={{ width: '100%', maxWidth: '400px', padding: '2rem', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
+            <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+              <h2 className="heading-3">Maktab QR Kodi</h2>
+              <button onClick={() => setShowQRModal(false)} style={{ background: 'transparent', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            {qrLoading ? (
+              <div className="flex-center flex-col gap-3" style={{ padding: '2rem' }}>
+                <Loader className="spinner" size={32} color="var(--primary)" />
+                <p>QR Kod generatsiya qilinmoqda...</p>
+              </div>
+            ) : (
+              <div className="flex-col flex-center gap-4">
+                <div style={{ background: 'white', padding: '1rem', borderRadius: '12px' }}>
+                  {qrData ? (
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${qrData}`} alt="QR Code" style={{ width: '250px', height: '250px' }} />
+                  ) : (
+                    <p style={{ color: 'black' }}>QR kod topilmadi</p>
+                  )}
+                </div>
+                <p className="text-muted" style={{ fontSize: '0.9rem' }}>
+                  Ushbu QR kodni chop etib maktab kirish qismiga ilib qo'ying.
+                  O'qituvchilar o'z kabinetlari orqali skaner qilib darsga kelganlarini tasdiqlashadi.
+                </p>
+                <button 
+                  className="btn btn-outline" 
+                  style={{ width: '100%', marginTop: '0.5rem' }}
+                  onClick={() => {
+                     const link = document.createElement('a');
+                     link.href = `https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${qrData}`;
+                     link.download = 'Maktab_QR_Kod.png';
+                     document.body.appendChild(link);
+                     link.click();
+                     document.body.removeChild(link);
+                  }}
+                >
+                  <Download size={18} /> Yuklab olish (Sifatli)
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
