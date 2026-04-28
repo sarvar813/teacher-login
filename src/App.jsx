@@ -9,14 +9,12 @@ import QRCheckinData from './pages/admin/QRCheckinData';
 import VideoReviewList from './pages/admin/VideoReviewList';
 import Settings from './pages/admin/Settings';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
-import QRTerminal from './pages/QRTerminal';
 
 function App() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/terminal" element={<QRTerminal />} />
         
         {/* Admin Routes */}
         <Route path="/admin" element={<DashboardLayout role="admin" />}>

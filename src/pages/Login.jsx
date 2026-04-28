@@ -99,16 +99,8 @@ export default function Login() {
               style={{ width: '100%', justifyContent: 'center' }}
               disabled={loading}
             >
-              <LogIn size={18} /> {loading ? "Ulanmoqda..." : "Kirish"}
+              <LogIn size={18} /> {loading ? "Ulanmoqda..." : "Tizimga Kirish"}
             </button>
-            <button 
-              type="button"
-              className="btn btn-outline" 
-              onClick={() => navigate('/terminal')}
-              style={{ width: '100%', justifyContent: 'center', borderColor: 'var(--success)', color: 'var(--success)' }}
-            >
-              <QrCode size={18} /> Maktab Turniketi (Faol rejim)
-            </button>            
           </div>
         </form>
 
