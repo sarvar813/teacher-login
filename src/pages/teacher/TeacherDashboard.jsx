@@ -42,21 +42,27 @@ export default function TeacherDashboard() {
     if (!file) return;
 
     setVideoStatus('sent');
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64Photo = reader.result;
+    try {
+      // Darslarni tekshirib olib, birinchisiga yuklaymiz. Agar yo'q bo'lsa 1 ga.
+      let activeLessonId = 1;
       try {
-         // Haqiqiy API orqali jo'natamiz (lesson id hozircha 1 deb olingan)
-         await api.uploadPhoto(1, base64Photo);
-         setVideoStatus('accepted');
-         alert("Muvaffaqiyatli! Rasm adminga yuborildi.");
-      } catch(error) {
-         console.error(error);
-         alert("Rasm yuborishda xato: " + (error.data ? JSON.stringify(error.data) : error.message));
-         setVideoStatus('rejected');
+        const lessons = await api.getLessonsToday();
+        if (lessons.results && lessons.results.length > 0) {
+          activeLessonId = lessons.results[0].id;
+        }
+      } catch (err) {
+        console.warn("Darslarni olishda xato, default 1 ishlatiladi");
       }
-    };
-    reader.readAsDataURL(file);
+
+      // Faylni to'g'ridan-to'g'ri FormData sifatida API orqali jo'natamiz
+      await api.uploadPhoto(activeLessonId, file);
+      setVideoStatus('accepted');
+      alert("Muvaffaqiyatli! Rasm adminga yuborildi.");
+    } catch(error) {
+       console.error("Upload error details:", error);
+       alert("Rasm yuborishda xato yuz berdi. Dars raqami topilmagan yoki noto'g'ri bo'lishi mumkin.\n\n" + (error.data ? JSON.stringify(error.data) : error.message));
+       setVideoStatus('rejected');
+    }
   };
   
   return (

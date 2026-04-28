@@ -74,7 +74,27 @@ export const api = {
   getPendingPhotos: () => request('/photos/pending/'),
   getMissingPhotos: () => request('/photos/missing/'),
   getPhotoStats: () => request('/photos/stats/'),
-  uploadPhoto: (lesson_id, photo_url) => request('/photos/', { method: 'POST', body: JSON.stringify({ lesson: lesson_id, photo: photo_url }) }),
+  uploadPhoto: async (lesson_id, file) => {
+    const token = localStorage.getItem('access_token');
+    const formData = new FormData();
+    formData.append('lesson', lesson_id);
+    formData.append('photo', file);
+
+    const response = await fetch(`${BASE_URL}/photos/`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        // Content-Type ni FormData o'zi avtomatik qoyadi (boundary bilan)
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw { status: response.status, data: errData };
+    }
+    return response.json();
+  },
   reviewPhoto: (photo_id, status, review_notes) => request(`/photos/${photo_id}/review/`, { method: 'POST', body: JSON.stringify({ status, review_notes }) }),
 
   // --- TEACHERS ---
