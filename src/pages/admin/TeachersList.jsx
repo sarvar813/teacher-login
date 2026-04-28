@@ -8,7 +8,7 @@ export default function TeachersList() {
   
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newTeacher, setNewTeacher] = useState({ full_name: '', username: '', password: '', phone: '' });
+  const [newTeacher, setNewTeacher] = useState({ first_name: '', last_name: '', username: '', password: '', phone: '' });
 
   const loadTeachers = () => {
     setLoading(true);
@@ -26,9 +26,10 @@ export default function TeachersList() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await api.createTeacher(newTeacher);
+      const employee_id = 'TCH-' + Math.floor(10000 + Math.random() * 90000);
+      await api.createTeacher({ ...newTeacher, employee_id });
       setShowModal(false);
-      setNewTeacher({ full_name: '', username: '', password: '', phone: '' });
+      setNewTeacher({ first_name: '', last_name: '', username: '', password: '', phone: '' });
       loadTeachers();
     } catch (err) {
       console.error(err);
@@ -87,9 +88,12 @@ export default function TeachersList() {
                     <td style={{ padding: '1rem' }}>
                       <div className="flex-center gap-3" style={{ justifyContent: 'flex-start' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--primary)', overflow: 'hidden' }}>
-                          <img src={`https://ui-avatars.com/api/?name=${teacher.full_name || teacher.username}&background=6366f1&color=fff`} alt="" style={{width:'100%', height:'100%'}} />
+                          <img src={`https://ui-avatars.com/api/?name=${teacher.first_name || teacher.username}&background=6366f1&color=fff`} alt="" style={{width:'100%', height:'100%'}} />
                         </div>
-                        <span style={{ fontWeight: 500 }}>{teacher.full_name || 'Ism kiritilmagan'}</span>
+                        <div className="flex-col">
+                          <span style={{ fontWeight: 500 }}>{teacher.first_name} {teacher.last_name}</span>
+                          <span className="text-muted" style={{ fontSize: '0.75rem' }}>{teacher.employee_id}</span>
+                        </div>
                       </div>
                     </td>
                     <td style={{ padding: '1rem', color: 'var(--text-muted)' }}>@{teacher.username}</td>
@@ -129,12 +133,12 @@ export default function TeachersList() {
             
             <form onSubmit={handleCreateTeacher} className="flex-col gap-4">
               <div className="input-group">
-                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>F.I.O</label>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Ism (First Name)</label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input required type="text" className="input-field" value={newTeacher.full_name} onChange={e => setNewTeacher({...newTeacher, full_name: e.target.value})} placeholder="Masalan: Alisher Azizov" />
+                  <input required type="text" className="input-field" value={newTeacher.first_name} onChange={e => setNewTeacher({...newTeacher, first_name: e.target.value})} placeholder="Masalan: Sarvar" />
                   <button type="button" className="btn btn-outline" style={{ padding: '0.5rem 1rem' }} onClick={() => {
-                    if (!newTeacher.full_name) return alert("Avval F.I.O ni kiriting!");
-                    const base = newTeacher.full_name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (!newTeacher.first_name) return alert("Avval Ismni kiriting!");
+                    const base = (newTeacher.first_name + (newTeacher.last_name || '')).toLowerCase().replace(/[^a-z0-9]/g, '');
                     const rNum = Math.floor(100 + Math.random() * 900);
                     const rPass = Math.floor(100000 + Math.random() * 900000);
                     setNewTeacher({...newTeacher, username: `${base}${rNum}`, password: rPass.toString()});
@@ -142,6 +146,10 @@ export default function TeachersList() {
                     ✨
                   </button>
                 </div>
+              </div>
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Familiya (Last Name)</label>
+                <input required type="text" className="input-field" value={newTeacher.last_name} onChange={e => setNewTeacher({...newTeacher, last_name: e.target.value})} placeholder="Masalan: Boxodirov" />
               </div>
               <div className="input-group">
                 <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Login (Username)</label>
