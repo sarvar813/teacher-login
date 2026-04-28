@@ -5,6 +5,7 @@ import { api } from '../../api';
 export default function AdminDashboard() {
   const [logs, setLogs] = useState([]);
   const [photos, setPhotos] = useState([]);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   useEffect(() => {
     // Haqiqiy backend ma'lumotlarini olish
@@ -107,8 +108,16 @@ export default function AdminDashboard() {
               photos.map((photo, i) => (
               <div key={photo.id} className="flex-between animate-fade-in" style={{ paddingBottom: '1rem', borderBottom: i !== photos.length - 1 ? '1px solid var(--surface-border)' : 'none' }}>
                 <div className="flex-center gap-3">
-                  <div style={{ width: '48px', height: '36px', borderRadius: '8px', background: 'var(--bg-darker)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Camera size={16} color="var(--primary)" />
+                  <div 
+                    style={{ width: '48px', height: '48px', borderRadius: '8px', background: 'var(--bg-darker)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: photo.photo ? 'pointer' : 'default' }}
+                    onClick={() => photo.photo && setSelectedPhoto(photo.photo)}
+                    title="Rasmni kattalashtirish"
+                  >
+                    {photo.photo ? (
+                      <img src={photo.photo} alt="Dars" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Camera size={16} color="var(--primary)" />
+                    )}
                   </div>
                   <div className="flex-col">
                     <span style={{ fontWeight: 500 }}>Dars #{photo.lesson}</span>
@@ -127,6 +136,21 @@ export default function AdminDashboard() {
         </div>
 
       </div>
+
+      {/* Photo Viewer Modal */}
+      {selectedPhoto && (
+        <div 
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+          onClick={() => setSelectedPhoto(null)}
+        >
+          <img src={selectedPhoto} alt="Zoomed" style={{ maxWidth: '90%', maxHeight: '90%', borderRadius: '12px', border: '2px solid rgba(255,255,255,0.1)' }} />
+          <button 
+            style={{ position: 'absolute', top: '20px', right: '20px', background: 'rgba(255,255,255,0.1)', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', backdropFilter: 'blur(5px)' }}
+          >
+            Yopish
+          </button>
+        </div>
+      )}
     </div>
   );
 }
