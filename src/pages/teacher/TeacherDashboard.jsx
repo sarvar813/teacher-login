@@ -37,18 +37,26 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleSendPhoto = async () => {
-    // Rasm yuborish API orqali
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     setVideoStatus('sent');
-    try {
-       // Mock: assume lesson ID is 1 and photo is a dummy URL. 
-       // In reality, this would be an actual captured photo Base64 or Blob URL.
-       await api.uploadPhoto(1, 'https://example.com/dummy-photo.jpg');
-       setTimeout(() => setVideoStatus('accepted'), 2000);
-    } catch(e) {
-       console.error(e);
-       setVideoStatus('rejected');
-    }
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Photo = reader.result;
+      try {
+         // Haqiqiy API orqali jo'natamiz (lesson id hozircha 1 deb olingan)
+         await api.uploadPhoto(1, base64Photo);
+         setVideoStatus('accepted');
+         alert("Muvaffaqiyatli! Rasm adminga yuborildi.");
+      } catch(error) {
+         console.error(error);
+         alert("Rasm yuborishda xato: " + (error.data ? JSON.stringify(error.data) : error.message));
+         setVideoStatus('rejected');
+      }
+    };
+    reader.readAsDataURL(file);
   };
   
   return (
@@ -175,14 +183,27 @@ export default function TeacherDashboard() {
               <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
                 Dars boshlanganini tasdiqlash uchun bitta rasm (Dalil) tushiring va yuboring.
               </p>
-              <button 
-                className="btn btn-outline" 
-                style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)', opacity: videoStatus === 'sent' ? 0.6 : 1 }}
-                disabled={lessonStatus !== 'active' || videoStatus === 'sent'}
-                onClick={handleSendPhoto}
-              >
-                <Camera size={18} /> {videoStatus === 'sent' ? "Rasm yuborildi. Kutilmoqda..." : "Rasm tushish va yuborish"}
-              </button>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  capture="environment" 
+                  onChange={handlePhotoSelect}
+                  disabled={lessonStatus !== 'active' || videoStatus === 'sent' || videoStatus === 'accepted'}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
+                />
+                <button 
+                  className="btn btn-outline" 
+                  style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)', opacity: (videoStatus === 'sent' || videoStatus === 'accepted') ? 0.6 : 1 }}
+                  disabled={lessonStatus !== 'active' || videoStatus === 'sent' || videoStatus === 'accepted'}
+                >
+                  <Camera size={18} /> {
+                    videoStatus === 'sent' ? "Rasm yuborilmoqda..." : 
+                    videoStatus === 'accepted' ? "Muvaffaqiyatli qabul qilindi!" : 
+                    "Rasm tushish va yuborish"
+                  }
+                </button>
+              </div>
             </div>
 
           </div>
