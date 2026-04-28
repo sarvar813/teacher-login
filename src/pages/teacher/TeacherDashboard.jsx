@@ -43,15 +43,27 @@ export default function TeacherDashboard() {
 
     setVideoStatus('sent');
     try {
-      // Darslarni tekshirib olib, birinchisiga yuklaymiz. Agar yo'q bo'lsa 1 ga.
-      let activeLessonId = 1;
+      // Darslarni tekshirib olib, birinchisiga yuklaymiz.
+      let activeLessonId = null;
       try {
-        const lessons = await api.getLessonsToday();
-        if (lessons.results && lessons.results.length > 0) {
-          activeLessonId = lessons.results[0].id;
+        const todayRes = await api.getLessonsToday();
+        if (todayRes.results && todayRes.results.length > 0) {
+          activeLessonId = todayRes.results[0].id;
+        } else {
+          // Bugungi dars yo'q bo'lsa, umuman bor darslardan birinchisini qidiramiz (test uchun)
+          const allRes = await api.getLessons();
+          if (allRes.results && allRes.results.length > 0) {
+            activeLessonId = allRes.results[0].id;
+          }
         }
       } catch (err) {
-        console.warn("Darslarni olishda xato, default 1 ishlatiladi");
+        console.warn("Darslarni olishda xato");
+      }
+
+      if (!activeLessonId) {
+         alert("XATO: Tizimda siz uchun hech qanday dars topilmadi!\n\nRasm yuborish uchun avval Admin panelning 'Dars Jadvali' bo'limidan sizga dars biriktirilgan bo'lishi kerak.");
+         setVideoStatus('idle');
+         return;
       }
 
       // Faylni to'g'ridan-to'g'ri FormData sifatida API orqali jo'natamiz
@@ -60,7 +72,7 @@ export default function TeacherDashboard() {
       alert("Muvaffaqiyatli! Rasm adminga yuborildi.");
     } catch(error) {
        console.error("Upload error details:", error);
-       alert("Rasm yuborishda xato yuz berdi. Dars raqami topilmagan yoki noto'g'ri bo'lishi mumkin.\n\n" + (error.data ? JSON.stringify(error.data) : error.message));
+       alert("Rasm yuborishda xato yuz berdi.\n\n" + (error.data ? JSON.stringify(error.data) : error.message));
        setVideoStatus('rejected');
     }
   };
