@@ -88,11 +88,11 @@ export default function TeachersList() {
                     <td style={{ padding: '1rem' }}>
                       <div className="flex-center gap-3" style={{ justifyContent: 'flex-start' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--primary)', overflow: 'hidden' }}>
-                          <img src={`https://ui-avatars.com/api/?name=${teacher.first_name || teacher.username}&background=6366f1&color=fff`} alt="" style={{width:'100%', height:'100%'}} />
+                          <img src={`https://ui-avatars.com/api/?name=${teacher.full_name || teacher.username}&background=6366f1&color=fff`} alt="" style={{width:'100%', height:'100%'}} />
                         </div>
                         <div className="flex-col">
-                          <span style={{ fontWeight: 500 }}>{teacher.first_name} {teacher.last_name}</span>
-                          <span className="text-muted" style={{ fontSize: '0.75rem' }}>{teacher.employee_id}</span>
+                          <span style={{ fontWeight: 500 }}>{teacher.full_name || `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim() || 'Ism kiritilmagan'}</span>
+                          <span className="text-muted" style={{ fontSize: '0.75rem' }}>{teacher.employee_id || 'ID yo\'q'}</span>
                         </div>
                       </div>
                     </td>
