@@ -25,15 +25,15 @@ export default function VideoReviewList() {
     <div className="flex-col gap-6 animate-fade-in" style={{ height: '100%' }}>
       <div className="flex-between">
         <div>
-          <h1 className="heading-2">Video Tasdiqlash Arxivlari</h1>
-          <p className="text-muted">Dars jarayoniga oid yuborilgan barcha isbot videolar</p>
+          <h1 className="heading-2">Rasmlar Tasdiqlash Arxivlari</h1>
+          <p className="text-muted">Dars jarayoniga oid yuborilgan barcha isbot rasmlar</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2" style={{ gap: '1.5rem' }}>
         {videos.length === 0 ? (
            <div className="glass flex-center" style={{ padding: '3rem', gridColumn: 'span 2' }}>
-              <p className="text-muted">Kutilayotgan videolar yo'q.</p>
+              <p className="text-muted">Kutilayotgan rasmlar yo'q.</p>
            </div>
         ) : videos.map(vid => (
           <div key={vid.id} className="glass flex-col" style={{ padding: '1.5rem', gap: '1rem', position: 'relative', overflow: 'hidden' }}>

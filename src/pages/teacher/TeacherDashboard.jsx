@@ -22,16 +22,6 @@ export default function TeacherDashboard() {
     }
   }, [navigate]);
 
-  useEffect(() => {
-    const handleOpenScanner = () => {
-       setShowScanner(true);
-       // Scroll to the scanner section if needed
-       window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-    window.addEventListener('open-scanner', handleOpenScanner);
-    return () => window.removeEventListener('open-scanner', handleOpenScanner);
-  }, []);
-
   const handleScanCode = async (result) => {
     if (result && result.length > 0 && !isCheckedIn) {
       const scannedData = result[0].rawValue;
@@ -66,8 +56,11 @@ export default function TeacherDashboard() {
 
       // Faylni to'g'ridan-to'g'ri FormData sifatida API orqali jo'natamiz
       await api.uploadPhoto(activeLessonId, file);
+      
+      // Va darsni avtomatik boshlaymiz!
+      setLessonStatus('active');
       setVideoStatus('accepted');
-      alert("Muvaffaqiyatli! Rasm adminga yuborildi.");
+      alert("Muvaffaqiyatli! Rasm yuborildi va dars boshlandi.");
     } catch(error) {
        console.error("Upload error details:", error);
        alert("Rasm yuborishda xato yuz berdi. Dars raqami topilmagan yoki noto'g'ri bo'lishi mumkin.\n\n" + (error.data ? JSON.stringify(error.data) : error.message));
@@ -174,53 +167,46 @@ export default function TeacherDashboard() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2" style={{ gap: '1rem', marginTop: '1rem' }}>
-              <button 
-                className={`btn ${lessonStatus === 'active' ? 'btn-outline' : 'btn-primary'}`}
-                disabled={!isCheckedIn || lessonStatus === 'ended'}
-                onClick={() => setLessonStatus('active')}
-                style={{ opacity: (!isCheckedIn || lessonStatus === 'ended') ? 0.5 : 1 }}
-              >
-                <PlayCircle size={20} /> Start Lesson
-              </button>
-              
+            <div className="grid grid-cols-1" style={{ marginTop: '1rem' }}>
               <button 
                 className={`btn ${lessonStatus === 'active' ? 'btn-danger' : 'btn-outline'}`}
                 disabled={lessonStatus !== 'active'}
                 onClick={() => setLessonStatus('ended')}
-                style={{ opacity: lessonStatus !== 'active' ? 0.5 : 1 }}
+                style={{ opacity: lessonStatus !== 'active' ? 0.5 : 1, width: '100%' }}
               >
-                <StopCircle size={20} /> End Lesson
+                <StopCircle size={20} /> Darsni Yakunlash
               </button>
             </div>
 
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--surface-border)' }}>
-              <h4 style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Rasm Tasdiq (Dars boshida)</h4>
-              <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
-                Dars boshlanganini tasdiqlash uchun bitta rasm (Dalil) tushiring va yuboring.
-              </p>
-              <div style={{ position: 'relative' }}>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  capture="environment" 
-                  onChange={handlePhotoSelect}
-                  disabled={videoStatus === 'sent' || videoStatus === 'accepted'}
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer', zIndex: 10 }}
-                />
-                <button 
-                  className="btn btn-outline" 
-                  style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)', opacity: (videoStatus === 'sent' || videoStatus === 'accepted') ? 0.6 : 1 }}
-                  disabled={videoStatus === 'sent' || videoStatus === 'accepted'}
-                >
-                  <Camera size={18} /> {
-                    videoStatus === 'sent' ? "Rasm yuborilmoqda..." : 
-                    videoStatus === 'accepted' ? "Muvaffaqiyatli qabul qilindi!" : 
-                    "Rasm tushish va yuborish"
-                  }
-                </button>
+            {lessonStatus !== 'active' && lessonStatus !== 'ended' && (
+              <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--surface-border)' }}>
+                <h4 style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Darsni Boshlash</h4>
+                <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  Darsni boshlash uchun sinf holatini rasmga olib yuborishingiz shart.
+                </p>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment" 
+                    onChange={handlePhotoSelect}
+                    disabled={!isCheckedIn || videoStatus === 'sent'}
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: !isCheckedIn ? 'not-allowed' : 'pointer', zIndex: 10 }}
+                  />
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ width: '100%', opacity: (!isCheckedIn || videoStatus === 'sent') ? 0.6 : 1 }}
+                    disabled={!isCheckedIn || videoStatus === 'sent'}
+                  >
+                    <Camera size={18} /> {
+                      !isCheckedIn ? "Avval Check-in qiling" :
+                      videoStatus === 'sent' ? "Rasm yuborilmoqda..." : 
+                      "Rasmga olish va Darsni boshlash"
+                    }
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
           </div>
         </div>

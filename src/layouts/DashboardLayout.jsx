@@ -66,16 +66,7 @@ export default function DashboardLayout({ role }) {
               return (
                 <li key={idx}>
                   <Link 
-                    to={item.path}
-                    onClick={(e) => {
-                      if (item.path === '/teacher/qr-scan') {
-                         e.preventDefault();
-                         if (location.pathname !== '/teacher') {
-                            navigate('/teacher');
-                         }
-                         setTimeout(() => window.dispatchEvent(new Event('open-scanner')), 100);
-                      }
-                    }} 
+                    to={item.path} 
                     style={{ 
                       display: 'flex', alignItems: 'center', gap: '1rem', 
                       padding: '0.75rem 1rem', 
