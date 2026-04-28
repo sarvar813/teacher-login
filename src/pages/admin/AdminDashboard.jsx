@@ -1,50 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserCheck, UserX, Clock, Video, TrendingUp } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, Camera, TrendingUp } from 'lucide-react';
+import { api } from '../../api';
 
 export default function AdminDashboard() {
   const [logs, setLogs] = useState([]);
-  const [videos, setVideos] = useState([]);
+  const [photos, setPhotos] = useState([]);
 
   useEffect(() => {
-    // Initial Load
-    const localLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
-    setLogs(localLogs.slice(0, 5));
-    
-    const localVideos = JSON.parse(localStorage.getItem('pendingVideos') || '[{"id": 1, "title": "8 \\"B\\" sinf - Fizika", "teacher": "Qodirov M."}, {"id": 2, "title": "9 \\"A\\" sinf - Ona tili", "teacher": "Usmonova G."}]');
-    if (!localStorage.getItem('pendingVideos')) {
-      localStorage.setItem('pendingVideos', JSON.stringify(localVideos));
-    }
-    setVideos(localVideos);
+    // Haqiqiy backend ma'lumotlarini olish
+    api.getAttendanceLogs()
+      .then(res => setLogs((res.results || []).slice(0, 5)))
+      .catch(console.error);
 
-    // Listen to changes from Terminal (if opened in another tab)
-    const handleStorage = () => {
-      const updatedLogs = JSON.parse(localStorage.getItem('checkinLogs') || '[]');
-      setLogs(updatedLogs.slice(0, 5));
-
-      const updatedVideos = JSON.parse(localStorage.getItem('pendingVideos') || '[]');
-      setVideos(updatedVideos);
-    };
-
-    window.addEventListener('storage', handleStorage);
-    
-    // Fallback polling (in case it is tested in the same tab, which is unlikely but good to have)
-    const interval = setInterval(handleStorage, 2000);
-
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      clearInterval(interval);
-    }
+    api.getPendingPhotos()
+      .then(res => setPhotos((res.results || []).slice(0, 5)))
+      .catch(console.error);
   }, []);
-  const handleVideoAction = (id, action) => {
-    const updatedVideos = videos.filter(v => v.id !== id);
-    setVideos(updatedVideos);
-    localStorage.setItem('pendingVideos', JSON.stringify(updatedVideos));
-    
-    // Log interaction natively so the frontend teacher could theoretically receive it
-    const responses = JSON.parse(localStorage.getItem('videoResponses') || '{}');
-    responses[id] = action;
-    localStorage.setItem('videoResponses', JSON.stringify(responses));
-    window.dispatchEvent(new Event('storage'));
+
+  const handlePhotoAction = async (id, action) => {
+    try {
+      await api.reviewPhoto(id, action, "Tekshirildi");
+      setPhotos(photos.filter(p => p.id !== id));
+    } catch (e) {
+      console.error(e);
+      alert("Xatolik yuz berdi");
+    }
   };
 
   const stats = [
@@ -52,7 +32,7 @@ export default function AdminDashboard() {
     { label: "Bugun Kelganlar", value: "42", icon: <UserCheck size={24} color="var(--success)" />, trend: "87%" },
     { label: "Kelmaganlar", value: "3", icon: <UserX size={24} color="var(--danger)" /> },
     { label: "Kechikkanlar", value: "3", icon: <Clock size={24} color="var(--warning)" /> },
-    { label: "Qabul Qilinmagan Videolar", value: "5", icon: <Video size={24} color="var(--danger)" /> },
+    { label: "Kutilayotgan Rasmlar", value: photos.length || "0", icon: <Camera size={24} color="var(--danger)" /> },
     { label: "O'rtacha KPI", value: "92%", icon: <TrendingUp size={24} color="var(--success)" />, trend: "+1.2%" },
   ];
 
@@ -100,16 +80,16 @@ export default function AdminDashboard() {
               <div key={log.id} className="flex-between animate-fade-in" style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--surface-border)' }}>
                 <div className="flex-center gap-3">
                   <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', overflow: 'hidden' }}>
-                    <img src={`https://ui-avatars.com/api/?name=${log.name}&background=8b5cf6&color=fff`} alt="" style={{width:'100%', height:'100%'}} />
+                    <img src={`https://ui-avatars.com/api/?name=${log.teacher_name}&background=8b5cf6&color=fff`} alt="" style={{width:'100%', height:'100%'}} />
                   </div>
                   <div className="flex-col">
-                    <span style={{ fontWeight: 500 }}>{log.name}</span>
-                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>{log.type === 'Teacher' ? log.grade + ' o\'qituvchisi' : log.grade}</span>
+                    <span style={{ fontWeight: 500 }}>{log.teacher_name}</span>
+                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>{log.status_display || log.status}</span>
                   </div>
                 </div>
                 <div className="flex-col" style={{ alignItems: 'flex-end' }}>
-                  <span className="badge badge-success">{log.time}</span>
-                  <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>O'z vaqtida</span>
+                  <span className="badge badge-success">{new Date(log.check_in_time).toLocaleTimeString()}</span>
+                  <span className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}>{log.is_late ? "Kechikkan" : "O'z vaqtida"}</span>
                 </div>
               </div>
               ))
@@ -117,32 +97,32 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Video Review Queue */}
+        {/* Photo Review Queue */}
         <div className="glass" style={{ padding: '1.5rem' }}>
-          <h3 className="heading-3" style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Kutilayotgan Dars Videolari</h3>
+          <h3 className="heading-3" style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Kutilayotgan Dars Rasmlari</h3>
           <div className="flex-col gap-4">
-            {videos.length === 0 ? (
-              <p className="text-muted" style={{ padding: '1rem', textAlign: 'center' }}>Hamma videolar tekshirilgan.</p>
+            {photos.length === 0 ? (
+              <p className="text-muted" style={{ padding: '1rem', textAlign: 'center' }}>Hamma rasmlar tekshirilgan.</p>
             ) : (
-              videos.map((vid, i) => (
-              <div key={vid.id} className="flex-between animate-fade-in" style={{ paddingBottom: '1rem', borderBottom: i !== videos.length - 1 ? '1px solid var(--surface-border)' : 'none' }}>
+              photos.map((photo, i) => (
+              <div key={photo.id} className="flex-between animate-fade-in" style={{ paddingBottom: '1rem', borderBottom: i !== photos.length - 1 ? '1px solid var(--surface-border)' : 'none' }}>
                 <div className="flex-center gap-3">
                   <div style={{ width: '48px', height: '36px', borderRadius: '8px', background: 'var(--bg-darker)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Video size={16} color="var(--primary)" />
+                    <Camera size={16} color="var(--primary)" />
                   </div>
                   <div className="flex-col">
-                    <span style={{ fontWeight: 500 }}>{vid.title}</span>
-                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>O'qituvchi: {vid.teacher}</span>
+                    <span style={{ fontWeight: 500 }}>Dars #{photo.lesson}</span>
+                    <span className="text-muted" style={{ fontSize: '0.8rem' }}>Sana: {new Date(photo.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div className="flex-center gap-2">
-                  <button onClick={() => handleVideoAction(vid.id, 'accept')} className="btn btn-success" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Qabul</button>
-                  <button onClick={() => handleVideoAction(vid.id, 'reject')} className="btn btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Rad</button>
+                  <button onClick={() => handlePhotoAction(photo.id, 'approved')} className="btn btn-success" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Qabul</button>
+                  <button onClick={() => handlePhotoAction(photo.id, 'rejected')} className="btn btn-danger" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>Rad</button>
                 </div>
               </div>
               ))
             )}
-            {videos.length > 0 && <button className="btn btn-outline" style={{ width: '100%', marginTop: '0.5rem' }}>Barchasini ko'rish</button>}
+            {photos.length > 0 && <button className="btn btn-outline" style={{ width: '100%', marginTop: '0.5rem' }}>Barchasini ko'rish</button>}
           </div>
         </div>
 

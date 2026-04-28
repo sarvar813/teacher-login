@@ -37,16 +37,18 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleSendVideo = () => {
+  const handleSendPhoto = async () => {
+    // Rasm yuborish API orqali
     setVideoStatus('sent');
-    const existingVideos = JSON.parse(localStorage.getItem('pendingVideos') || '[]');
-    const newVideo = {
-      id: Date.now(),
-      title: '8 "B" sinf - Fizika (Mock)',
-      teacher: 'Azizov Alisher'
-    };
-    localStorage.setItem('pendingVideos', JSON.stringify([newVideo, ...existingVideos]));
-    window.dispatchEvent(new Event('storage'));
+    try {
+       // Mock: assume lesson ID is 1 and photo is a dummy URL. 
+       // In reality, this would be an actual captured photo Base64 or Blob URL.
+       await api.uploadPhoto(1, 'https://example.com/dummy-photo.jpg');
+       setTimeout(() => setVideoStatus('accepted'), 2000);
+    } catch(e) {
+       console.error(e);
+       setVideoStatus('rejected');
+    }
   };
   
   return (
@@ -169,17 +171,17 @@ export default function TeacherDashboard() {
             </div>
 
             <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--surface-border)' }}>
-              <h4 style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Video Tasdiq (Dars boshida)</h4>
+              <h4 style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Rasm Tasdiq (Dars boshida)</h4>
               <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '1rem' }}>
-                Dars boshlanganini tasdiqlash uchun 1-2 minutlik sinf muhiti va o'quvchilar ko'rinib turgan video yuboring.
+                Dars boshlanganini tasdiqlash uchun bitta rasm (Dalil) tushiring va yuboring.
               </p>
               <button 
                 className="btn btn-outline" 
                 style={{ width: '100%', borderColor: 'var(--primary)', color: 'var(--primary)', opacity: videoStatus === 'sent' ? 0.6 : 1 }}
                 disabled={lessonStatus !== 'active' || videoStatus === 'sent'}
-                onClick={handleSendVideo}
+                onClick={handleSendPhoto}
               >
-                <Video size={18} /> {videoStatus === 'sent' ? "Video yuborildi. Kuqilyapti..." : "Video yozib olish va yuborish"}
+                <Camera size={18} /> {videoStatus === 'sent' ? "Rasm yuborildi. Kutilmoqda..." : "Rasm tushish va yuborish"}
               </button>
             </div>
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, Calendar, Video, QrCode, 
+  LayoutDashboard, Users, Calendar, Video, QrCode, Camera,
   Settings, LogOut, Menu, X, ChevronRight, Bell, Search
 } from 'lucide-react';
 
@@ -15,7 +15,7 @@ export default function DashboardLayout({ role }) {
     { name: "O'qituvchilar", path: "/admin/teachers", icon: <Users size={20} /> },
     { name: "Dars Jadvali", path: "/admin/schedule", icon: <Calendar size={20} /> },
     { name: "QR Nazorat", path: "/admin/qr-checkin", icon: <QrCode size={20} /> },
-    { name: "Video Tekshiruv", path: "/admin/video-review", icon: <Video size={20} /> },
+    { name: "Rasm Tekshiruv", path: "/admin/video-review", icon: <Camera size={20} /> },
     { name: "Sozlamalar", path: "/admin/settings", icon: <Settings size={20} /> }
   ];
 
