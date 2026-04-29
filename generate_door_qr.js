@@ -12,6 +12,7 @@ async function run() {
       body: JSON.stringify({ username: 'admin', password: 'admin123' })
     });
     
+    
     if (!loginRes.ok) {
        console.log("❌ Admin login xato! Iltimos, admin parolini tekshiring. Status:", loginRes.status);
        const err = await loginRes.text();
