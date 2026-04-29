@@ -12,18 +12,28 @@ export default function TeacherDashboard() {
   const [videoStatus, setVideoStatus] = useState('idle'); // idle, sent, accepted, rejected
 
   const [profile, setProfile] = useState(null);
+  const isScanningRef = React.useRef(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       setProfile(JSON.parse(userStr));
+      // Sahifa yuklanganda bugungi davomatni tekshirish
+      api.getAttendanceToday()
+        .then(res => {
+          if (res && res.results && res.results.length > 0) {
+            setIsCheckedIn(true);
+          }
+        })
+        .catch(err => console.error("Davomatni tekshirishda xato:", err));
     } else {
       navigate('/'); // if not logged in, boot out
     }
   }, [navigate]);
 
   const handleScanCode = async (result) => {
-    if (result && result.length > 0 && !isCheckedIn) {
+    if (result && result.length > 0 && !isCheckedIn && !isScanningRef.current) {
+      isScanningRef.current = true;
       const scannedData = result[0].rawValue;
       try {
         // Haqiqiy backend ga yuborish
@@ -31,8 +41,24 @@ export default function TeacherDashboard() {
         setIsCheckedIn(true);
         setShowScanner(false);
       } catch (err) {
-        console.error(err);
-        alert("Xato: O'qitishda muammo bo'ldi (yoki bu noto'g'ri QR-Kod). API: /attendance/check-in/");
+        console.error("Checkin Error:", err);
+        let errorMsg = "O'qitishda muammo bo'ldi (yoki bu noto'g'ri QR-Kod).";
+        
+        if (err.data && err.data.error) errorMsg = err.data.error;
+        else if (err.data && err.data.message) errorMsg = err.data.message;
+        else if (err.data && typeof err.data === 'object' && Object.keys(err.data).length > 0) errorMsg = JSON.stringify(err.data);
+        
+        // Agar allaqachon check-in qilgan bo'lsa
+        if (err.status === 400 && (errorMsg.toLowerCase().includes('already') || errorMsg.toLowerCase().includes('mavjud'))) {
+           setIsCheckedIn(true);
+           setShowScanner(false);
+           alert("Siz bugun allaqachon Check-in qilgansiz.");
+        } else {
+           alert(`Xato: ${errorMsg}\n\nSkan qilingan ma'lumot: ${scannedData}\n\nIltimos, faqat Admin paneldagi to'g'ri QR kodni skaner qiling.`);
+        }
+        
+        // Skanerni biroz vaqtdan so'ng yana aktivlashtirish
+        setTimeout(() => { isScanningRef.current = false; }, 2500);
       }
     }
   };

@@ -16,14 +16,16 @@ export default function QRCheckinData() {
     try {
       const res = await api.getQRCodes();
       if (res.results && res.results.length > 0) {
-        setQrData(res.results[0].code_value || res.results[0].code || 'SCHOOL_CHECKIN');
+        setQrData(res.results[0].code);
       } else {
         const createRes = await api.generateStaticQR();
-        setQrData(createRes.code_value || createRes.code || 'SCHOOL_CHECKIN');
+        setQrData(createRes.code);
       }
     } catch (err) {
       console.error(err);
-      setQrData("ERROR_OR_FALLBACK_CODE");
+      let errorMsg = err.message || JSON.stringify(err.data || err);
+      alert("QR Kodni olishda yoki yaratishda xato yuz berdi: " + errorMsg);
+      setQrData(null);
     } finally {
       setQrLoading(false);
     }
