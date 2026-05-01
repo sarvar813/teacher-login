@@ -100,6 +100,8 @@ export const api = {
   // --- TEACHERS ---
   getTeachers: () => request('/teachers/'),
   createTeacher: (data) => request('/teachers/', { method: 'POST', body: JSON.stringify(data) }),
+  updateTeacher: (id, data) => request(`/teachers/${id}/`, { method: 'PATCH', body: JSON.stringify(data) }),
+  deleteTeacher: (id) => request(`/teachers/${id}/`, { method: 'DELETE' }),
   assignClassesToTeacher: (id, class_ids) => request(`/teachers/${id}/assign_classes/`, { method: 'POST', body: JSON.stringify({ class_ids }) }),
   assignSubjectsToTeacher: (id, subject_ids) => request(`/teachers/${id}/assign_subjects/`, { method: 'POST', body: JSON.stringify({ subject_ids }) }),
   getTeacherStatusInfo: (id) => request(`/teachers/${id}/status_info/`),

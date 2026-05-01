@@ -10,10 +10,17 @@ export default function TeachersList() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newTeacher, setNewTeacher] = useState({ first_name: '', last_name: '', username: '', password: '', phone: '' });
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState(null);
+
   const loadTeachers = () => {
     setLoading(true);
     api.getTeachers()
-      .then(res => setTeachers(res.results || []))
+      .then(res => {
+        // "inactive" bo'lganlarni ro'yxatdan olib tashlaymiz
+        const activeTeachers = (res.results || []).filter(t => t.status !== 'inactive');
+        setTeachers(activeTeachers);
+      })
       .catch(err => console.error("O'qituvchilarni yuklashda xatolik:", err))
       .finally(() => setLoading(false));
   };
@@ -34,6 +41,49 @@ export default function TeachersList() {
     } catch (err) {
       console.error(err);
       alert("Xatolik: " + (err.data ? JSON.stringify(err.data) : err.message));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteClick = async (id) => {
+    if (!window.confirm("Rostdan ham ushbu o'qituvchini o'chirmoqchimisiz?")) return;
+    try {
+      await api.deleteTeacher(id);
+      loadTeachers();
+    } catch (err) {
+      console.error(err);
+      alert("O'chirishda xatolik yuz berdi: " + (err.data ? JSON.stringify(err.data) : err.message));
+    }
+  };
+
+  const handleEditClick = (teacher) => {
+    setEditingTeacher({
+      id: teacher.id,
+      first_name: teacher.first_name || teacher.user?.first_name || '',
+      last_name: teacher.last_name || teacher.user?.last_name || '',
+      phone: teacher.phone || '',
+      employee_id: teacher.employee_id || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateTeacher = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await api.updateTeacher(editingTeacher.id, {
+        first_name: editingTeacher.first_name,
+        last_name: editingTeacher.last_name,
+        phone: editingTeacher.phone,
+        employee_id: editingTeacher.employee_id
+      });
+      setShowEditModal(false);
+      setEditingTeacher(null);
+      loadTeachers();
+    } catch (err) {
+      console.error(err);
+      alert("Yangilashda xatolik: " + (err.data ? JSON.stringify(err.data) : err.message));
     } finally {
       setIsSubmitting(false);
     }
@@ -105,10 +155,10 @@ export default function TeachersList() {
                     </td>
                     <td style={{ padding: '1rem' }}>
                       <div className="flex-center gap-2" style={{ justifyContent: 'flex-start' }}>
-                        <button className="btn-outline flex-center" style={{ padding: '0.4rem', borderRadius: '8px', color: 'var(--accent)', borderColor: 'var(--surface-border)' }}>
+                        <button onClick={() => handleEditClick(teacher)} className="btn-outline flex-center" style={{ padding: '0.4rem', borderRadius: '8px', color: 'var(--accent)', borderColor: 'var(--surface-border)' }}>
                           <Edit size={16} />
                         </button>
-                        <button className="btn-outline flex-center" style={{ padding: '0.4rem', borderRadius: '8px', color: 'var(--danger)', borderColor: 'var(--surface-border)' }}>
+                        <button onClick={() => handleDeleteClick(teacher.id)} className="btn-outline flex-center" style={{ padding: '0.4rem', borderRadius: '8px', color: 'var(--danger)', borderColor: 'var(--surface-border)' }}>
                           <Trash2 size={16} />
                         </button>
                       </div>
@@ -166,6 +216,43 @@ export default function TeachersList() {
 
               <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }} disabled={isSubmitting}>
                 {isSubmitting ? "Yaratilmoqda..." : "Saqlash va Yaratish"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingTeacher && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="glass" style={{ width: '100%', maxWidth: '400px', padding: '2rem', borderRadius: 'var(--radius-lg)' }}>
+            <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
+              <h2 className="heading-3">O'qituvchini tahrirlash</h2>
+              <button onClick={() => setShowEditModal(false)} style={{ background: 'transparent', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleUpdateTeacher} className="flex-col gap-4">
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Ism (First Name)</label>
+                <input required type="text" className="input-field" value={editingTeacher.first_name} onChange={e => setEditingTeacher({...editingTeacher, first_name: e.target.value})} />
+              </div>
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Familiya (Last Name)</label>
+                <input type="text" className="input-field" value={editingTeacher.last_name} onChange={e => setEditingTeacher({...editingTeacher, last_name: e.target.value})} />
+              </div>
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Xodim ID (Employee ID)</label>
+                <input required type="text" className="input-field" value={editingTeacher.employee_id} onChange={e => setEditingTeacher({...editingTeacher, employee_id: e.target.value})} />
+              </div>
+              <div className="input-group">
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem', display: 'block' }}>Telefon Raqam</label>
+                <input type="text" className="input-field" value={editingTeacher.phone} onChange={e => setEditingTeacher({...editingTeacher, phone: e.target.value})} />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }} disabled={isSubmitting}>
+                {isSubmitting ? "Saqlanmoqda..." : "Saqlash"}
               </button>
             </form>
           </div>
